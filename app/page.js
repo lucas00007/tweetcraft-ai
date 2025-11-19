@@ -35,23 +35,46 @@ export default function Home() {
 
     setLoading(true)
     try {
+      console.log('Sending request:', { topic, tone, includeCode })
+      
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ topic, tone, includeCode })
       })
       
-      const data = await response.json()
-      const tweetArray = data.tweets.split(/\d+\.\s/).filter(tweet => tweet.trim())
-      setTweets(tweetArray)
+      console.log('Response status:', response.status)
       
-      const newCount = generationsLeft - 1
-      setGenerationsLeft(newCount)
-      localStorage.setItem('generationsLeft', newCount.toString())
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      console.log('Response data:', data)
+      
+      if (data.error) {
+        console.error('API Error:', data.error)
+        alert('Error: ' + data.error)
+        return
+      }
+      
+      if (data.tweets) {
+        const tweetArray = data.tweets.split(/\d+\.\s/).filter(tweet => tweet.trim())
+        setTweets(tweetArray)
+        
+        const newCount = generationsLeft - 1
+        setGenerationsLeft(newCount)
+        localStorage.setItem('generationsLeft', newCount.toString())
+      } else {
+        console.error('No tweets in response')
+        alert('No tweets generated')
+      }
     } catch (error) {
       console.error('Error generating tweets:', error)
+      alert('Failed to generate tweets: ' + error.message)
+    } finally {
+  
     }
-    setLoading(false)
   }
 
   const copyTweet = async (tweet, index) => {
