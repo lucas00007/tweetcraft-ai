@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Sparkles, Copy, Check, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -13,12 +13,16 @@ export default function Home() {
   const [tweets, setTweets] = useState([])
   const [loading, setLoading] = useState(false)
   const [copiedIndex, setCopiedIndex] = useState(null)
-  const [generationsLeft, setGenerationsLeft] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return parseInt(localStorage.getItem('generationsLeft') || '5')
+  const [generationsLeft, setGenerationsLeft] = useState(5)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    const stored = localStorage.getItem('generationsLeft')
+    if (stored !== null) {
+      setGenerationsLeft(parseInt(stored))
     }
-    return 5
-  })
+  }, [])
 
   const exampleTopics = [
     "Just learned React Server Components",
@@ -73,7 +77,7 @@ export default function Home() {
       console.error('Error generating tweets:', error)
       alert('Failed to generate tweets: ' + error.message)
     } finally {
-  
+      setLoading(false)
     }
   }
 
@@ -93,7 +97,7 @@ export default function Home() {
           AI-powered tweet generation for tech Twitter
         </p>
         <p className="text-purple-400 mt-2">
-          {generationsLeft} generations remaining
+          {mounted ? `${generationsLeft} generations remaining` : 'Loading...'}
         </p>
       </div>
 
