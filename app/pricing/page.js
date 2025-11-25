@@ -1,29 +1,33 @@
 'use client'
 
-import { loadStripe } from '@stripe/stripe-js'
-import { Check } from 'lucide-react'
+import { useState } from 'react'
+import { Check, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
-
 export default function Pricing() {
+  const [loading, setLoading] = useState(false)
+  
+  const PRICE_ID = 'price_1SXEDI2d8DsGef2ARFcN6PXm'
+
   const handleSubscribe = async () => {
-    const stripe = await stripePromise
+    setLoading(true)
     
-    const response = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
-    
-    const session = await response.json()
-    
-    const result = await stripe.redirectToCheckout({
-      sessionId: session.id,
-    })
-    
-    if (result.error) {
-      console.error(result.error.message)
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId: PRICE_ID }),
+      })
+      
+      const { url } = await response.json()
+      
+      window.location.href = url
+      
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Something went wrong. Please try again.')
+      setLoading(false)
     }
   }
 
@@ -95,9 +99,17 @@ export default function Pricing() {
             </ul>
             <Button
               onClick={handleSubscribe}
+              disabled={loading}
               className="w-full bg-purple-600 hover:bg-purple-700"
             >
-              Subscribe Now
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                'Subscribe Now'
+              )}
             </Button>
           </CardContent>
         </Card>
