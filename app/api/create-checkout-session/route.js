@@ -6,12 +6,17 @@ const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SEC
 }) : null;
 
 export async function POST(req) {
+  console.log('Stripe Secret Key exists:', !!process.env.STRIPE_SECRET_KEY);
+  console.log('NEXT_PUBLIC_URL:', process.env.NEXT_PUBLIC_URL);
+  
   if (!stripe) {
+    console.error('Stripe not configured!');
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 });
   }
   
   try {
     const { priceId } = await req.json();
+    console.log('Price ID received:', priceId);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -27,10 +32,16 @@ export async function POST(req) {
       allow_promotion_codes: true,
     });
 
+    console.log('Checkout session created:', session.id);
     return NextResponse.json({ sessionId: session.id, url: session.url });
     
   } catch (error) {
-    console.error('Stripe error:', error);
+    console.error('Stripe error details:', {
+      message: error.message,
+      type: error.type,
+      code: error.code,
+      statusCode: error.statusCode
+    });
     return NextResponse.json(
       { error: error.message },
       { status: 500 }
